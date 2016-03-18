@@ -10114,7 +10114,7 @@ proc reflistfilter_change {n1 n2 op} {
 }
 
 proc refill_reflist {} {
-    global reflist reflistfilter showrefstop headids tagids otherrefids localrefs_tracking_remotes
+    global reflist reflistfilter showrefstop headids tagids otherrefids localrefs_tracking_remotes sortrefsbytype
     global curview
 
     if {![info exists showrefstop] || ![winfo exists $showrefstop]} return
@@ -10174,6 +10174,9 @@ proc refill_reflist {} {
     }
     set otherrefs [lsort -index 0 $otherrefs]
     lappend refs {*}$localrefs {*}$locally_tracked_remote_refs {*}$remoterefs {*}$tagrefs {*}$otherrefs
+    if {$sortrefsbytype ne 1} {
+       set refs [lsort -index 0 $refs]
+    }
     if {$refs eq $reflist} return
 
     # Update the contents of $showrefstop.list according to the
@@ -11586,7 +11589,7 @@ proc create_prefs_page {w} {
 proc prefspage_general {notebook} {
     global NS maxwidth maxgraphpct showneartags showlocalchanges
     global tabstop limitdiffs autoselect autosellen extdifftool perfile_attrs
-    global hideremotes want_ttk have_ttk maxrefs web_browser
+    global hideremotes want_ttk have_ttk maxrefs web_browser sortrefsbytype
 
     set page [create_prefs_page $notebook.general]
 
@@ -11610,6 +11613,9 @@ proc prefspage_general {notebook} {
     ${NS}::checkbutton $page.hideremotes -text [mc "Hide remote refs"] \
         -variable hideremotes
     grid x $page.hideremotes -sticky w
+    ${NS}::checkbutton $page.sortrefsbytype -text [mc "Sort refs by type"] \
+        -variable sortrefsbytype
+    grid x $page.sortrefsbytype -sticky w
 
     ${NS}::label $page.ddisp -text [mc "Diff display options"]
     grid $page.ddisp - -sticky w -pady 10
@@ -11734,7 +11740,7 @@ proc doprefs {} {
     global oldprefs prefstop showneartags showlocalchanges
     global uicolor bgcolor fgcolor ctext diffcolors selectbgcolor markbgcolor
     global tabstop limitdiffs autoselect autosellen extdifftool perfile_attrs
-    global hideremotes want_ttk have_ttk
+    global hideremotes want_ttk have_ttk sortrefsbytype
 
     set top .gitkprefs
     set prefstop $top
@@ -11743,7 +11749,8 @@ proc doprefs {} {
         return
     }
     foreach v {maxwidth maxgraphpct showneartags showlocalchanges \
-                   limitdiffs tabstop perfile_attrs hideremotes want_ttk} {
+                   limitdiffs tabstop perfile_attrs hideremotes want_ttk \
+                   sortrefsbytype} {
         set oldprefs($v) [set $v]
     }
     ttk_toplevel $top
@@ -11869,7 +11876,8 @@ proc prefscan {} {
     global oldprefs prefstop
 
     foreach v {maxwidth maxgraphpct showneartags showlocalchanges \
-                   limitdiffs tabstop perfile_attrs hideremotes want_ttk} {
+                   limitdiffs tabstop perfile_attrs hideremotes want_ttk \
+                   sortrefsbytype} {
         global $v
         set $v $oldprefs($v)
     }
@@ -12405,6 +12413,7 @@ set showneartags 1
 set hideremotes 0
 set maxrefs 20
 set visiblerefs {"master"}
+set sortrefsbytype 0
 set maxlinelen 200
 set showlocalchanges 1
 set limitdiffs 1
@@ -12515,7 +12524,7 @@ set config_variables {
     filesepbgcolor filesepfgcolor linehoverbgcolor linehoverfgcolor
     linehoveroutlinecolor mainheadcirclecolor workingfilescirclecolor
     indexcirclecolor circlecolors linkfgcolor circleoutlinecolor diffbgcolors
-    web_browser
+    web_browser sortrefsbytype
 }
 foreach var $config_variables {
     config_init_trace $var
